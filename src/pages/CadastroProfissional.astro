@@ -1,0 +1,56 @@
+---
+import Layout from '../layouts/Layout.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import { onboardingSteps } from '../data/pluribeauty';
+---
+
+<Layout title="Pluribeauty | Cadastro Profissional" currentPage="CadastroProfissional" showNav={false}>
+	<div class="page-stack">
+		<section class="hero-panel page-stack">
+			<a class="button button--ghost" href="/Descobrir">Voltar à home</a>
+			<SectionHeading
+				eyebrow="Onboarding"
+				title="Wizard de verificação para ativar novos profissionais."
+				description="Fluxo multi-etapas com validação documental, escopo de atuação e análise manual da plataforma."
+			/>
+		</section>
+
+		<section class="two-column two-column--wide">
+			<div class="panel page-stack">
+				<div class="steps">
+					{
+						onboardingSteps.map((step) => (
+							<article>
+								<h3>{step.title}</h3>
+								<p>{step.description}</p>
+							</article>
+						))
+					}
+				</div>
+			</div>
+
+			<form class="panel page-stack">
+				<p class="eyebrow">Pré-cadastro</p>
+				<div class="form-grid">
+					<input class="input" type="text" placeholder="Nome profissional ou do salão" />
+					<input class="input" type="text" placeholder="CPF ou CNPJ" />
+					<input class="input" type="email" placeholder="E-mail" />
+					<input class="input" type="tel" placeholder="WhatsApp" />
+				</div>
+				<select class="select">
+					<option>Especialidade principal</option>
+					<option>Cabelo</option>
+					<option>Barba</option>
+					<option>Unhas</option>
+					<option>Estética</option>
+					<option>Maquiagem</option>
+				</select>
+				<textarea class="textarea" placeholder="Conte sobre sua experiência, diferenciais e links de portfólio"></textarea>
+				<div class="inline-actions">
+					<button class="button button--primary" type="button">Enviar para análise</button>
+					<a class="button button--secondary" href="/Descobrir">Salvar para depois</a>
+				</div>
+			</form>
+		</section>
+	</div>
+</Layout>

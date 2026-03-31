@@ -1,0 +1,29 @@
+---
+import { formatCurrency } from '../data/pluribeauty';
+
+const { professional } = Astro.props;
+---
+
+<article class="professional-card">
+	<img class="professional-card__cover" src={professional.coverPhoto} alt={`Capa de ${professional.name}`} loading="lazy" />
+	<div class="professional-card__body">
+		<div class="professional-card__header">
+			<img class="professional-card__avatar" src={professional.profilePhoto} alt={`Foto de ${professional.name}`} loading="lazy" />
+			<div>
+				<p class="eyebrow">Verificado</p>
+				<h3>{professional.name}</h3>
+				<p>{professional.tagline}</p>
+			</div>
+		</div>
+		<div class="professional-card__meta">
+			<span>{professional.rating.toFixed(1)} estrelas</span>
+			<span>{professional.distanceKm.toFixed(1)} km</span>
+			<span>a partir de {formatCurrency(professional.priceFrom)}</span>
+		</div>
+		<div class="tag-row">
+			{professional.specialties.map((specialty) => <span class="tag">{specialty}</span>)}
+			{professional.serviceTypes.map((type) => <span class="tag tag--ghost">{type}</span>)}
+		</div>
+		<a class="button button--secondary button--block" href={`/ProfissionalDetalhe/${professional.id}`}>Ver perfil</a>
+	</div>
+</article>

@@ -1,0 +1,37 @@
+---
+import Layout from '../layouts/Layout.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import { hasSupabaseEnv } from '../lib/supabase';
+---
+
+<Layout title="Pluribeauty | Perfil" currentPage="Perfil">
+	<div class="page-stack">
+		<section class="panel page-stack">
+			<SectionHeading
+				eyebrow="Perfil"
+				title="Conta, preferências e estado da integração."
+				description="Esta área resume o que o cliente controla e também mostra quando as variáveis públicas do Supabase já estão prontas."
+			/>
+		</section>
+
+		<section class="two-column">
+			<article class="profile-row">
+				<p class="eyebrow">Minha conta</p>
+				<h3>Marina Costa</h3>
+				<p>Cliente premium • notificações por push ativas • preferência por atendimento em domicílio.</p>
+				<div class="mini-list">
+					<span>São Paulo</span>
+					<span>Pagamento salvo</span>
+					<span>3 favoritos</span>
+				</div>
+			</article>
+			<article class="profile-row">
+				<p class="eyebrow">Supabase</p>
+				<h3>{hasSupabaseEnv() ? 'Conectado para uso no browser' : 'Variáveis pendentes'}</h3>
+				<p>
+					Use `PUBLIC_SUPABASE_URL` e `PUBLIC_SUPABASE_ANON_KEY` para trocar a camada mockada pela base real.
+				</p>
+			</article>
+		</section>
+	</div>
+</Layout>

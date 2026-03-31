@@ -1,0 +1,46 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { chatMessages, getProfessionalById, professionals } from '../../data/pluribeauty';
+
+export function getStaticPaths() {
+	return professionals.map((professional) => ({
+		params: { id: professional.id },
+	}));
+}
+
+const { id } = Astro.params;
+const professional = id ? getProfessionalById(id) : undefined;
+const messages = professional ? chatMessages[professional.id] ?? [] : [];
+
+if (!professional) {
+	return Astro.redirect('/Agenda');
+}
+---
+
+<Layout title={`Pluribeauty | Chat com ${professional.name}`} currentPage="Chat" showNav={false}>
+	<div class="page-stack">
+		<section class="chat-card">
+			<div class="inline-actions" style="justify-content: space-between;">
+				<div class="page-stack" style="gap: 4px;">
+					<p class="eyebrow">Chat</p>
+					<h1 style="font-size: clamp(2.4rem, 8vw, 4rem);">{professional.name}</h1>
+				</div>
+				<a class="button button--ghost" href="/Agenda">Voltar</a>
+			</div>
+			<div class="chat-thread">
+				{
+					messages.map((message) => (
+						<div class:list={['chat-bubble', message.from === 'client' && 'chat-bubble--self']}>
+							<p>{message.text}</p>
+							<p style="font-size: 0.82rem; opacity: 0.8;">{message.time}</p>
+						</div>
+					))
+				}
+			</div>
+			<div class="inline-actions" style="align-items: stretch;">
+				<input class="input" type="text" placeholder="Escreva uma mensagem..." />
+				<button class="button button--primary">Enviar</button>
+			</div>
+		</section>
+	</div>
+</Layout>
