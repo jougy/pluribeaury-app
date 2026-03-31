@@ -1,0 +1,816 @@
+---
+import CategoryCard from '../components/CategoryCard.astro';
+import Layout from '../layouts/Layout.astro';
+import { categories } from '../data/pluribeauty';
+---
+
+<Layout title="Pluribeauty | Descobrir" currentPage="Descobrir">
+	<section class="discover-page">
+		<header class="discover-page__header">
+			<p class="eyebrow">Descobrir</p>
+			<h1>Beleza &amp; Estilo</h1>
+		</header>
+
+		<button class="discover-card discover-card--location" type="button" data-open-location-modal>
+			<div class="discover-card__header">
+				<p class="discover-label">Localização</p>
+			</div>
+			<div class="discover-card__value">
+				<span class="discover-icon discover-icon--small" aria-hidden="true">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+						<path d="M12 21s7-5.2 7-11a7 7 0 1 0-14 0c0 5.8 7 11 7 11Z"></path>
+						<circle cx="12" cy="10" r="2.8"></circle>
+					</svg>
+				</span>
+				<div class="discover-card__copy">
+					<strong data-location-summary>São Paulo, SP</strong>
+				</div>
+			</div>
+		</button>
+
+		<section class="discover-card">
+			<div class="discover-range__head">
+				<p class="discover-label">Raio de busca</p>
+				<strong data-radius-value>12 km</strong>
+			</div>
+			<input class="discover-range" type="range" min="1" max="50" value="12" data-radius-input />
+		</section>
+
+		<label class="discover-search" aria-label="Buscar serviços">
+			<span class="discover-icon discover-icon--small" aria-hidden="true">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+					<circle cx="11" cy="11" r="6.5"></circle>
+					<path d="m16 16 4.5 4.5"></path>
+				</svg>
+			</span>
+			<input type="search" placeholder="Buscar serviços, profissionais ou estilos" />
+		</label>
+
+		<section class="discover-specialties">
+			<header class="discover-specialties__header">
+				<p class="eyebrow">Especialidades</p>
+				<h2>Escolha por categoria</h2>
+			</header>
+
+			<div class="category-grid">
+				{categories.map((category) => <CategoryCard category={category} />)}
+			</div>
+		</section>
+	</section>
+
+	<div class="location-modal" data-location-modal hidden>
+		<div class="location-modal__backdrop"></div>
+		<div class="location-modal__panel" role="dialog" aria-modal="true" aria-labelledby="location-modal-title">
+			<div class="location-modal__topbar">
+				<label class="location-modal__search" aria-label="Buscar endereço">
+					<span class="discover-icon discover-icon--small" aria-hidden="true">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+							<circle cx="11" cy="11" r="6.5"></circle>
+							<path d="m16 16 4.5 4.5"></path>
+						</svg>
+					</span>
+					<input
+						type="search"
+						placeholder="Buscar endereço"
+						autocomplete="street-address"
+						data-location-input
+					/>
+				</label>
+			</div>
+
+			<div class="location-modal__map">
+				<div class="location-modal__map-canvas" data-location-map></div>
+				<div class="location-modal__center-card">
+					<p class="discover-label">Localização ativa</p>
+					<strong id="location-modal-title" data-location-selected>São Paulo, SP</strong>
+					<span data-location-status>Permita o uso da sua localização ou busque um endereço válido.</span>
+				</div>
+			</div>
+
+			<div class="location-modal__actions">
+				<button class="discover-geo-button" type="button" data-location-button>Usar minha localização</button>
+				<button class="discover-confirm-button" type="button" data-confirm-location>
+					Confirmar localização
+				</button>
+			</div>
+
+			<ul class="discover-suggestions" data-location-suggestions hidden></ul>
+		</div>
+	</div>
+</Layout>
+
+<script>
+	import L from 'leaflet';
+	import 'leaflet/dist/leaflet.css';
+
+	const locationStorageKey = 'pluribeauty:selectedLocation';
+	const radiusStorageKey = 'pluribeauty:radiusKm';
+	const baseMapCenter = { lat: -23.5505, lon: -46.6333 };
+	const saoPauloViewBox = {
+		left: -47.35,
+		top: -23.18,
+		right: -46.28,
+		bottom: -24.15,
+	};
+
+	const normalizeText = (value) =>
+		value
+			.toLowerCase()
+			.normalize('NFD')
+			.replace(/[\u0300-\u036f]/g, '')
+			.trim();
+
+	const buildSuggestionTitle = (address, fallback) => {
+		const road = address.road || address.pedestrian || address.footway || address.cycleway || fallback;
+		const number = address.house_number ? `, ${address.house_number}` : '';
+		const neighborhood =
+			address.suburb || address.neighbourhood || address.quarter || address.city_district || '';
+		return `${road}${number}${neighborhood ? `, ${neighborhood}` : ''}`;
+	};
+
+	const buildSuggestionSubtitle = (address) => {
+		return [
+			address.city || address.town || address.municipality || 'São Paulo',
+			address.state || 'SP',
+			address.postcode || '',
+		]
+			.filter(Boolean)
+			.join(' • ');
+	};
+
+	const scoreSuggestion = (item, query) => {
+		const normalizedQuery = normalizeText(query);
+		const normalizedTitle = normalizeText(item.title);
+		const normalizedDisplay = normalizeText(item.displayName);
+		let score = 0;
+
+		if (normalizedTitle.startsWith(normalizedQuery)) score += 120;
+		if (normalizedTitle.includes(normalizedQuery)) score += 80;
+		if (normalizedDisplay.includes(normalizedQuery)) score += 35;
+		if (normalizeText(item.subtitle).includes('sao paulo')) score += 40;
+		if (item.address.house_number && normalizedQuery.match(/\d+/)?.[0] === item.address.house_number) score += 50;
+		if (item.address.road && normalizedQuery.includes(normalizeText(item.address.road))) score += 60;
+		score += Math.round((Number(item.importance) || 0) * 20);
+
+		return score;
+	};
+
+	const radiusInput = document.querySelector('[data-radius-input]');
+	const radiusValue = document.querySelector('[data-radius-value]');
+	if (radiusInput && radiusValue) {
+		const syncRadius = () => {
+			radiusValue.textContent = `${radiusInput.value} km`;
+			localStorage.setItem(radiusStorageKey, radiusInput.value);
+		};
+
+		const savedRadius = localStorage.getItem(radiusStorageKey);
+		if (savedRadius) radiusInput.value = savedRadius;
+		radiusInput.addEventListener('input', syncRadius);
+		syncRadius();
+	}
+
+	const modal = document.querySelector('[data-location-modal]');
+	const modalPanel = modal?.querySelector('.location-modal__panel');
+	const openModalButton = document.querySelector('[data-open-location-modal]');
+	const summaryLabel = document.querySelector('[data-location-summary]');
+	const selectedLabel = document.querySelector('[data-location-selected]');
+	const statusLabel = document.querySelector('[data-location-status]');
+	const geoButton = document.querySelector('[data-location-button]');
+	const confirmButton = document.querySelector('[data-confirm-location]');
+	const input = document.querySelector('[data-location-input]');
+	const suggestions = document.querySelector('[data-location-suggestions]');
+	const mapElement = document.querySelector('[data-location-map]');
+
+	let selectedLocation = {
+		label: 'São Paulo, SP',
+		meta: 'Usar localização atual ou definir endereço.',
+		coords: { lat: -23.5505, lon: -46.6333 },
+	};
+	let draftLocation = { ...selectedLocation };
+	let userLocation = null;
+	let debounceTimer;
+	let abortController;
+	let map;
+	let tilesLayer;
+	let selectedMarker;
+	let userMarker;
+
+	const selectedIcon = L.divIcon({
+		className: 'location-map-pin',
+		html: '<span class="location-map-pin__core"></span>',
+		iconSize: [18, 18],
+		iconAnchor: [9, 18],
+	});
+
+	const ensureMap = () => {
+		if (!mapElement || map) return;
+
+		map = L.map(mapElement, {
+			zoomControl: false,
+			attributionControl: true,
+		}).setView([baseMapCenter.lat, baseMapCenter.lon], 13);
+
+		tilesLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+			maxZoom: 19,
+			attribution: '&copy; OpenStreetMap',
+		});
+		tilesLayer.addTo(map);
+
+		selectedMarker = L.marker([baseMapCenter.lat, baseMapCenter.lon], {
+			icon: selectedIcon,
+			keyboard: false,
+		}).addTo(map);
+
+		userMarker = L.circleMarker([baseMapCenter.lat, baseMapCenter.lon], {
+			radius: 6,
+			color: '#ffffff',
+			weight: 3,
+			fillColor: '#1a73e8',
+			fillOpacity: 1,
+		});
+	};
+
+	const hideSuggestions = () => {
+		if (!suggestions) return;
+		suggestions.hidden = true;
+		suggestions.innerHTML = '';
+	};
+
+	const renderMapMarkers = () => {
+		ensureMap();
+		if (!map || !selectedMarker || !draftLocation?.coords) return;
+
+		const selectedLatLng = [draftLocation.coords.lat, draftLocation.coords.lon];
+		selectedMarker.setLatLng(selectedLatLng);
+
+		if (userLocation?.coords) {
+			const userLatLng = [userLocation.coords.lat, userLocation.coords.lon];
+			userMarker.setLatLng(userLatLng);
+			if (!map.hasLayer(userMarker)) userMarker.addTo(map);
+		} else if (map.hasLayer(userMarker)) {
+			map.removeLayer(userMarker);
+		}
+
+		const bounds = [];
+		bounds.push(selectedLatLng);
+		if (userLocation?.coords) bounds.push([userLocation.coords.lat, userLocation.coords.lon]);
+
+		if (bounds.length > 1) {
+			map.fitBounds(bounds, { padding: [40, 40] });
+		} else {
+			map.setView(selectedLatLng, 16);
+		}
+	};
+
+	const syncSummaryUi = () => {
+		if (summaryLabel) summaryLabel.textContent = selectedLocation.label;
+		localStorage.setItem(locationStorageKey, JSON.stringify(selectedLocation));
+	};
+
+	const syncDraftUi = () => {
+		if (selectedLabel) selectedLabel.textContent = draftLocation.label;
+		if (statusLabel) statusLabel.textContent = draftLocation.meta;
+		renderMapMarkers();
+	};
+
+	const openModal = () => {
+		if (!modal) return;
+		draftLocation = JSON.parse(JSON.stringify(selectedLocation));
+		syncDraftUi();
+		if (input) input.value = draftLocation.label;
+		modal.hidden = false;
+		document.body.style.overflow = 'hidden';
+		window.setTimeout(() => {
+			ensureMap();
+			map?.invalidateSize();
+			renderMapMarkers();
+			input?.focus();
+		}, 50);
+	};
+
+	const closeModal = () => {
+		if (!modal) return;
+		modal.hidden = true;
+		document.body.style.overflow = '';
+		hideSuggestions();
+	};
+
+	const setDraftStatus = (message) => {
+		draftLocation.meta = message;
+		if (statusLabel) statusLabel.textContent = message;
+	};
+
+	const chooseDraftLocation = ({ label, meta, coords }) => {
+		draftLocation = { label, meta, coords };
+		syncDraftUi();
+		hideSuggestions();
+	};
+
+	const confirmLocation = () => {
+		selectedLocation = JSON.parse(JSON.stringify(draftLocation));
+		syncSummaryUi();
+		closeModal();
+	};
+
+	const renderSuggestions = (items) => {
+		if (!suggestions) return;
+
+		if (!items.length) {
+			hideSuggestions();
+			setDraftStatus('Nenhum endereço relevante encontrado para esse texto.');
+			return;
+		}
+
+		suggestions.innerHTML = '';
+		for (const item of items) {
+			const li = document.createElement('li');
+			const button = document.createElement('button');
+			button.type = 'button';
+			button.className = 'discover-suggestion';
+			button.innerHTML = `<strong>${item.title}</strong><span>${item.subtitle}</span>`;
+			button.addEventListener('click', () => {
+				if (input) input.value = item.title;
+				chooseDraftLocation({
+					label: item.title,
+					meta: 'Endereço pronto para confirmar.',
+					coords: { lat: Number(item.lat), lon: Number(item.lon) },
+				});
+			});
+			li.appendChild(button);
+			suggestions.appendChild(li);
+		}
+
+		suggestions.hidden = false;
+	};
+
+	const fetchAddressSuggestions = async (query) => {
+		if (abortController) abortController.abort();
+		abortController = new AbortController();
+
+		const url = new URL('https://nominatim.openstreetmap.org/search');
+		url.searchParams.set('format', 'jsonv2');
+		url.searchParams.set('addressdetails', '1');
+		url.searchParams.set('countrycodes', 'br');
+		url.searchParams.set('limit', '8');
+		url.searchParams.set('dedupe', '1');
+		url.searchParams.set('bounded', '1');
+		url.searchParams.set(
+			'viewbox',
+			`${saoPauloViewBox.left},${saoPauloViewBox.top},${saoPauloViewBox.right},${saoPauloViewBox.bottom}`,
+		);
+		url.searchParams.set('q', query);
+
+		const response = await fetch(url, {
+			signal: abortController.signal,
+			headers: { Accept: 'application/json' },
+		});
+
+		if (!response.ok) throw new Error('Falha ao buscar endereços.');
+
+		const raw = await response.json();
+		const normalized = raw
+			.filter((item) => item?.address)
+			.map((item) => ({
+				lat: item.lat,
+				lon: item.lon,
+				importance: item.importance,
+				address: item.address,
+				displayName: item.display_name,
+				title: buildSuggestionTitle(item.address, item.name || item.display_name),
+				subtitle: buildSuggestionSubtitle(item.address),
+			}))
+			.filter((item) => {
+				const q = normalizeText(query);
+				const title = normalizeText(item.title);
+				const display = normalizeText(item.displayName);
+				return title.includes(q) || display.includes(q);
+			})
+			.map((item) => ({
+				...item,
+				score: scoreSuggestion(item, query),
+			}))
+			.sort((a, b) => b.score - a.score)
+			.slice(0, 5);
+
+		return normalized;
+	};
+
+	const reverseGeocode = async (latitude, longitude) => {
+		const url = new URL('https://nominatim.openstreetmap.org/reverse');
+		url.searchParams.set('format', 'jsonv2');
+		url.searchParams.set('lat', String(latitude));
+		url.searchParams.set('lon', String(longitude));
+		url.searchParams.set('zoom', '18');
+		url.searchParams.set('addressdetails', '1');
+
+		const response = await fetch(url, { headers: { Accept: 'application/json' } });
+		if (!response.ok) throw new Error('Falha ao resolver a localização atual.');
+		return response.json();
+	};
+
+	const savedLocation = localStorage.getItem(locationStorageKey);
+	if (savedLocation) {
+		try {
+			const parsed = JSON.parse(savedLocation);
+			if (parsed?.label && parsed?.coords) selectedLocation = parsed;
+		} catch {}
+	}
+	draftLocation = JSON.parse(JSON.stringify(selectedLocation));
+	syncSummaryUi();
+	syncDraftUi();
+
+	openModalButton?.addEventListener('click', openModal);
+	confirmButton?.addEventListener('click', confirmLocation);
+
+	document.addEventListener('keydown', (event) => {
+		if (event.key === 'Escape' && modal && !modal.hidden) closeModal();
+	});
+
+	modal?.addEventListener('click', (event) => {
+		if (!modalPanel?.contains(event.target)) {
+			closeModal();
+		}
+	});
+
+	geoButton?.addEventListener('click', () => {
+		if (!navigator.geolocation) {
+			setDraftStatus('Este navegador não suporta geolocalização.');
+			return;
+		}
+
+		setDraftStatus('Solicitando permissão de localização...');
+		geoButton.disabled = true;
+
+		navigator.geolocation.getCurrentPosition(
+			async (position) => {
+				const coords = { lat: position.coords.latitude, lon: position.coords.longitude };
+				userLocation = { coords };
+
+				try {
+					const result = await reverseGeocode(coords.lat, coords.lon);
+					const address = result.address || {};
+					chooseDraftLocation({
+						label: buildSuggestionTitle(address, result.display_name || 'Minha localização'),
+						meta: 'Localização atual pronta para confirmar.',
+						coords,
+					});
+				} catch {
+					chooseDraftLocation({
+						label: `${coords.lat.toFixed(5)}, ${coords.lon.toFixed(5)}`,
+						meta: 'Posição capturada, mas não consegui converter em endereço.',
+						coords,
+					});
+				} finally {
+					renderMapMarkers();
+					geoButton.disabled = false;
+				}
+			},
+			(error) => {
+				const messageMap = {
+					1: 'Permissão de localização negada.',
+					2: 'Não foi possível obter sua localização atual.',
+					3: 'Tempo esgotado ao tentar obter sua localização.',
+				};
+				setDraftStatus(messageMap[error.code] || 'Falha ao acessar sua localização.');
+				geoButton.disabled = false;
+			},
+			{ enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
+		);
+	});
+
+	input?.addEventListener('input', () => {
+		const query = input.value.trim();
+		window.clearTimeout(debounceTimer);
+
+		if (query.length < 4) {
+			hideSuggestions();
+			setDraftStatus('Digite rua e número para resultados mais precisos.');
+			return;
+		}
+
+		setDraftStatus('Buscando endereços mais relevantes...');
+		debounceTimer = window.setTimeout(async () => {
+			try {
+				const results = await fetchAddressSuggestions(query);
+				renderSuggestions(results);
+			} catch (error) {
+				if (error?.name === 'AbortError') return;
+				hideSuggestions();
+				setDraftStatus('Não consegui buscar endereços agora. Tente novamente.');
+			}
+		}, 280);
+	});
+</script>
+
+<style>
+	.discover-page {
+		display: grid;
+		gap: 18px;
+	}
+
+	.discover-page__header {
+		display: grid;
+		gap: 8px;
+		padding: 8px 2px 4px;
+	}
+
+	.discover-page__header h1 {
+		font-size: clamp(3.2rem, 12vw, 5rem);
+	}
+
+	.discover-card,
+	.discover-search {
+		display: grid;
+		gap: 8px;
+		padding: 14px 18px;
+		border-radius: 22px;
+		background: rgba(255, 255, 255, 0.78);
+		border: 1px solid rgba(212, 196, 176, 0.92);
+		box-shadow: 0 12px 24px rgba(45, 41, 38, 0.05);
+	}
+
+	.discover-card--location {
+		text-align: left;
+	}
+
+	.discover-card__header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+	}
+
+	.discover-card__value {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+
+	.discover-card__copy strong {
+		display: block;
+		font-size: 0.98rem;
+		font-weight: 500;
+		color: var(--soft-black);
+	}
+
+	.discover-label {
+		margin: 0;
+		font-size: 0.74rem;
+		letter-spacing: 0.16em;
+		text-transform: uppercase;
+		color: var(--warm-brown);
+		font-weight: 600;
+	}
+
+	.discover-icon {
+		color: var(--terracotta);
+		flex: 0 0 auto;
+	}
+
+	.discover-icon--small {
+		width: 16px;
+		height: 16px;
+	}
+
+	.discover-icon svg {
+		width: 100%;
+		height: 100%;
+	}
+
+	.discover-range__head {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+	}
+
+	.discover-range__head strong {
+		color: var(--terracotta);
+		font-size: 0.98rem;
+	}
+
+	.discover-range {
+		width: 100%;
+		accent-color: var(--terracotta);
+	}
+
+	.discover-search {
+		display: grid;
+		grid-template-columns: 16px 1fr;
+		align-items: center;
+		gap: 12px;
+	}
+
+	.discover-search input {
+		border: 0;
+		outline: 0;
+		background: transparent;
+		color: var(--soft-black);
+		font: inherit;
+	}
+
+	.discover-search input::placeholder {
+		color: rgba(45, 41, 38, 0.5);
+	}
+
+	.discover-specialties {
+		display: grid;
+		gap: 16px;
+	}
+
+	.discover-specialties__header {
+		display: grid;
+		gap: 8px;
+	}
+
+	.discover-specialties__header h2 {
+		font-size: clamp(2rem, 7vw, 3rem);
+	}
+
+	.location-modal[hidden] {
+		display: none;
+	}
+
+	.location-modal {
+		position: fixed;
+		inset: 0;
+		z-index: 60;
+		display: grid;
+		place-items: center;
+		padding: 16px;
+	}
+
+	.location-modal__backdrop {
+		position: absolute;
+		inset: 0;
+		background: rgba(45, 41, 38, 0.28);
+		backdrop-filter: blur(6px);
+	}
+
+	.location-modal__panel {
+		position: relative;
+		z-index: 1;
+		width: min(100%, 620px);
+		display: grid;
+		gap: 12px;
+		padding: 14px;
+		border-radius: 24px;
+		background: rgba(255, 255, 255, 0.98);
+		box-shadow: 0 28px 70px rgba(45, 41, 38, 0.16);
+	}
+
+	.location-modal__topbar {
+		display: grid;
+		grid-template-columns: 1fr;
+	}
+
+	.location-modal__search {
+		display: grid;
+		grid-template-columns: 16px 1fr;
+		align-items: center;
+		gap: 12px;
+		padding: 12px 14px;
+		border-radius: 18px;
+		background: #fff;
+		border: 1px solid rgba(212, 196, 176, 0.92);
+		box-shadow: 0 8px 18px rgba(45, 41, 38, 0.05);
+	}
+
+	.location-modal__search input {
+		border: 0;
+		outline: 0;
+		background: transparent;
+		font: inherit;
+	}
+
+	.location-modal__map {
+		position: relative;
+		min-height: 300px;
+		border-radius: 22px;
+		overflow: hidden;
+		border: 1px solid rgba(212, 196, 176, 0.92);
+	}
+
+	.location-modal__map-canvas {
+		position: absolute;
+		inset: 0;
+	}
+
+	.location-modal__center-card {
+		position: absolute;
+		left: 14px;
+		right: 14px;
+		bottom: 14px;
+		display: grid;
+		gap: 4px;
+		padding: 10px 12px;
+		border-radius: 18px;
+		background: rgba(255, 255, 255, 0.95);
+		box-shadow: 0 10px 20px rgba(45, 41, 38, 0.08);
+	}
+
+	.location-modal__center-card strong {
+		font-size: 0.94rem;
+		color: var(--soft-black);
+	}
+
+	.location-modal__center-card span {
+		font-size: 0.82rem;
+		color: rgba(45, 41, 38, 0.66);
+	}
+
+	.location-modal__actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 10px;
+		justify-content: space-between;
+	}
+
+	.discover-geo-button,
+	.discover-confirm-button {
+		min-height: 38px;
+		padding: 0 16px;
+		border-radius: 999px;
+		font-weight: 600;
+	}
+
+	.discover-geo-button {
+		border: 1px solid rgba(160, 82, 45, 0.18);
+		background: rgba(160, 82, 45, 0.08);
+		color: var(--terracotta);
+	}
+
+	.discover-confirm-button {
+		border: 0;
+		background: var(--terracotta);
+		color: white;
+	}
+
+	.discover-geo-button:disabled {
+		opacity: 0.6;
+		cursor: wait;
+	}
+
+	.discover-suggestions {
+		list-style: none;
+		margin: 0;
+		padding: 6px;
+		border-radius: 18px;
+		border: 1px solid rgba(212, 196, 176, 0.92);
+		background: rgba(255, 255, 255, 0.98);
+		box-shadow: 0 14px 30px rgba(45, 41, 38, 0.08);
+		display: grid;
+		gap: 6px;
+		max-height: 220px;
+		overflow: auto;
+	}
+
+	.discover-suggestion {
+		width: 100%;
+		display: grid;
+		gap: 3px;
+		padding: 10px 12px;
+		text-align: left;
+		border: 0;
+		border-radius: 14px;
+		background: transparent;
+	}
+
+	.discover-suggestion:hover {
+		background: rgba(160, 82, 45, 0.08);
+	}
+
+	.discover-suggestion strong {
+		font-size: 0.88rem;
+		color: var(--soft-black);
+		font-weight: 600;
+	}
+
+	.discover-suggestion span {
+		font-size: 0.78rem;
+		color: rgba(45, 41, 38, 0.62);
+	}
+
+	:global(.location-map-pin) {
+		background: transparent;
+		border: 0;
+	}
+
+	:global(.location-map-pin__core) {
+		display: block;
+		width: 18px;
+		height: 18px;
+		border-radius: 999px 999px 999px 0;
+		background: var(--terracotta);
+		transform: rotate(-45deg);
+		box-shadow: 0 8px 18px rgba(160, 82, 45, 0.24);
+	}
+
+	:global(.leaflet-control-attribution) {
+		font-size: 0.66rem;
+	}
+
+	:global(.leaflet-control-attribution a) {
+		color: var(--warm-brown);
+	}
+</style>

@@ -1,0 +1,43 @@
+---
+import Layout from '../layouts/Layout.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import { professionals } from '../data/pluribeauty';
+
+const favorites = professionals.slice(0, 3);
+---
+
+<Layout title="Pluribeauty | Favoritos" currentPage="Favoritos">
+	<div class="page-stack">
+		<section class="panel page-stack">
+			<SectionHeading
+				eyebrow="Favoritos"
+				title="Coleção pessoal de profissionais e estúdios."
+				description="Pensado para revisitas rápidas, comparação e re-agendamento em poucos toques."
+			/>
+		</section>
+		<section class="page-stack">
+			{
+				favorites.map((professional) => (
+					<article class="favorite-row">
+						<div class="inline-actions" style="justify-content: space-between; align-items: center;">
+							<div class="page-stack" style="gap: 6px;">
+								<p class="eyebrow">{professional.location.city}</p>
+								<h3>{professional.name}</h3>
+								<p>{professional.tagline}</p>
+							</div>
+							<span class="tag">Favorito</span>
+						</div>
+						<div class="mini-list">
+							<span>{professional.rating.toFixed(1)} estrelas</span>
+							<span>{professional.distanceKm.toFixed(1)} km</span>
+						</div>
+						<div class="inline-actions">
+							<a class="button button--primary" href={`/ProfissionalDetalhe/${professional.id}`}>Abrir perfil</a>
+							<a class="button button--secondary" href={`/Chat/${professional.id}`}>Mandar mensagem</a>
+						</div>
+					</article>
+				))
+			}
+		</section>
+	</div>
+</Layout>

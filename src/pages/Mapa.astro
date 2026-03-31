@@ -1,0 +1,35 @@
+---
+import Layout from '../layouts/Layout.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import { professionals } from '../data/pluribeauty';
+
+const pinPositions = [
+	'grid-column: 2 / span 3; grid-row: 2;',
+	'grid-column: 7 / span 3; grid-row: 3;',
+	'grid-column: 4 / span 3; grid-row: 5;',
+	'grid-column: 9 / span 3; grid-row: 6;',
+];
+---
+
+<Layout title="Pluribeauty | Mapa" currentPage="Mapa">
+	<div class="page-stack">
+		<section class="panel page-stack">
+			<SectionHeading
+				eyebrow="Mapa"
+				title="Visualização espacial dos profissionais mais próximos."
+				description="A interface já reserva espaço para um mapa real com geolocalização, radius search e clusters."
+			/>
+		</section>
+		<section class="map-grid">
+			{
+				professionals.map((professional, index) => (
+					<article class="map-pin" style={pinPositions[index] ?? ''}>
+						<p class="eyebrow">{professional.distanceKm.toFixed(1)} km</p>
+						<strong>{professional.name}</strong>
+						<p>{professional.specialties.join(' • ')}</p>
+					</article>
+				))
+			}
+		</section>
+	</div>
+</Layout>

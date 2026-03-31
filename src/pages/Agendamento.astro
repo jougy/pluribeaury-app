@@ -1,0 +1,108 @@
+---
+import Layout from '../layouts/Layout.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import { formatCurrency, getProfessionalById, services } from '../data/pluribeauty';
+import { getAvailableSlots, sumServices } from '../lib/booking';
+
+const professionalId = Astro.url.searchParams.get('professionalId') ?? 'studio-aura';
+const selectedIds = (Astro.url.searchParams.get('services') ?? 'svc-aura-cut')
+	.split(',')
+	.filter(Boolean);
+const professional = getProfessionalById(professionalId) ?? getProfessionalById('studio-aura');
+const selectedServices = services.filter((service) => selectedIds.includes(service.id));
+const totals = sumServices(selectedServices);
+const selectedDate = '2026-04-02';
+const slots = getAvailableSlots(selectedDate);
+---
+
+<Layout title="Pluribeauty | Agendamento" currentPage="Agendamento" showNav={false}>
+	<div class="page-stack">
+		<section class="panel page-stack">
+			<a class="button button--ghost" href={professional ? `/ProfissionalDetalhe/${professional.id}` : '/ListaProfissionais'}>Voltar ao perfil</a>
+			<SectionHeading
+				eyebrow="Agendamento"
+				title="Fluxo em 3 etapas para confirmar em poucos toques."
+				description="A experiência já está desenhada para depois conectar disponibilidade real, pagamento e notificações com Supabase."
+			/>
+		</section>
+
+		<section class="two-column two-column--wide">
+			<div class="page-stack">
+				<div class="panel page-stack">
+					<p class="eyebrow">1. Local do atendimento</p>
+					<div class="cards-grid" style="grid-template-columns: repeat(2, minmax(0, 1fr));">
+						<label class="service-item">
+							<div class="inline-actions" style="justify-content: space-between;">
+								<div>
+									<h3>Salão</h3>
+									<p>{professional?.location.address}</p>
+								</div>
+								<input type="radio" name="locationType" checked />
+							</div>
+						</label>
+						<label class="service-item">
+							<div class="inline-actions" style="justify-content: space-between;">
+								<div>
+									<h3>Domicílio</h3>
+									<p>Atendimento com deslocamento dentro do raio da profissional.</p>
+								</div>
+								<input type="radio" name="locationType" />
+							</div>
+						</label>
+					</div>
+					<textarea class="textarea" placeholder="Endereço completo para atendimento em domicílio"></textarea>
+				</div>
+
+				<div class="panel page-stack">
+					<p class="eyebrow">2. Data e horário</p>
+					<div class="form-grid">
+						<div class="page-stack" style="gap: 8px;">
+							<label for="booking-date">Data</label>
+							<input id="booking-date" class="input" type="date" value={selectedDate} min="2026-03-31" />
+						</div>
+						<div class="page-stack" style="gap: 8px;">
+							<label for="booking-slot">Horário</label>
+							<select id="booking-slot" class="select">
+								{slots.map((slot) => <option>{slot}</option>)}
+							</select>
+						</div>
+					</div>
+					<div class="tag-row">
+						{slots.map((slot) => <span class="chip">{slot}</span>)}
+					</div>
+				</div>
+
+				<div class="panel page-stack">
+					<p class="eyebrow">3. Confirmação</p>
+					<div class="summary-list">
+						{selectedServices.map((service) => (
+							<div class="service-item">
+								<div class="inline-actions" style="justify-content: space-between;">
+									<strong>{service.name}</strong>
+									<strong class="service-item__price">{formatCurrency(service.price)}</strong>
+								</div>
+								<p>{service.durationMinutes} min</p>
+							</div>
+						))}
+					</div>
+					<div class="inline-actions">
+						<a class="button button--primary" href="/Agenda">Confirmar agendamento</a>
+						<a class="button button--secondary" href={professional ? `/Chat/${professional.id}` : '/Agenda'}>Falar no chat</a>
+					</div>
+				</div>
+			</div>
+
+			<aside class="panel page-stack">
+				<p class="eyebrow">Resumo</p>
+				<h3>{professional?.name}</h3>
+				<p>{professional?.tagline}</p>
+				<div class="mini-list">
+					<span>{selectedServices.length} serviços</span>
+					<span>{totals.durationMinutes} min</span>
+					<span>{formatCurrency(totals.price)}</span>
+				</div>
+				<p>Pagamento pode ser antecipado, parcial ou presencial em uma próxima etapa de produto.</p>
+			</aside>
+		</section>
+	</div>
+</Layout>

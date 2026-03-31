@@ -1,0 +1,163 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import SectionHeading from '../../components/SectionHeading.astro';
+import { formatCurrency, getProfessionalById, getServicesByProfessional, professionals } from '../../data/pluribeauty';
+import { sumServices } from '../../lib/booking';
+
+export function getStaticPaths() {
+	return professionals.map((professional) => ({
+		params: { id: professional.id },
+	}));
+}
+
+const { id } = Astro.params;
+const professional = id ? getProfessionalById(id) : undefined;
+
+if (!professional) {
+	return Astro.redirect('/ListaProfissionais');
+}
+
+const professionalServices = getServicesByProfessional(professional.id);
+const initialSelection = professionalServices.slice(0, 1);
+const totals = sumServices(initialSelection);
+---
+
+<Layout title={`Pluribeauty | ${professional.name}`} currentPage="ProfissionalDetalhe" showNav={false}>
+	<div class="page-stack">
+		<section class="hero-panel">
+			<div class="page-stack">
+				<a class="button button--ghost" href="/ListaProfissionais">Voltar para a lista</a>
+				<img
+					src={professional.coverPhoto}
+					alt={`Ambiente de ${professional.name}`}
+					style="width:100%; aspect-ratio:16/9; object-fit:cover; border-radius:24px;"
+				/>
+				<div class="two-column">
+					<div class="page-stack">
+						<div class="section-heading">
+							<p class="eyebrow">Perfil Profissional</p>
+							<h1 style="font-size: clamp(2.8rem, 10vw, 4.5rem);">{professional.name}</h1>
+							<p>{professional.bio}</p>
+						</div>
+						<div class="detail-meta">
+							<span>{professional.rating.toFixed(1)} de avaliação</span>
+							<span>{professional.totalReviews} reviews</span>
+							<span>{professional.location.city}</span>
+							<span>{professional.serviceTypes.join(' + ')}</span>
+						</div>
+					</div>
+					<div class="panel page-stack">
+						<p class="eyebrow">Sobre</p>
+						<h3>{professional.tagline}</h3>
+						<p>{professional.location.address}</p>
+						<div class="tag-row">
+							{professional.specialties.map((specialty) => <span class="tag">{specialty}</span>)}
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<section class="two-column two-column--wide">
+			<div class="page-stack">
+				<div class="panel page-stack">
+					<SectionHeading
+						eyebrow="Serviços"
+						title="Seleção múltipla para compor o atendimento."
+						description="O rodapé flutuante resume preço e duração em tempo real."
+					/>
+					<div class="page-stack" id="service-selection" data-booking-root>
+						{
+							professionalServices.map((service, index) => (
+								<label
+									class="service-item"
+									data-service-item
+									data-service-id={service.id}
+									data-price={service.price}
+									data-duration={service.durationMinutes}
+								>
+									<div class="inline-actions" style="justify-content: space-between; align-items: start;">
+										<div class="page-stack" style="gap: 4px;">
+											<h3>{service.name}</h3>
+											<p>{service.description}</p>
+										</div>
+										<input type="checkbox" checked={index === 0} style="width: 22px; height: 22px; accent-color: var(--terracotta);" />
+									</div>
+									<div class="mini-list">
+										<span>{formatCurrency(service.price)}</span>
+										<span>{service.durationMinutes} min</span>
+										<span>{service.availableAt.join(' + ')}</span>
+									</div>
+								</label>
+							))
+						}
+					</div>
+				</div>
+
+				<div class="panel page-stack">
+					<SectionHeading eyebrow="Portfólio" title="Imagem, textura e resultado." />
+					<div class="cards-grid">
+						{professional.portfolio.map((image) => (
+							<img src={image} alt={`Portfólio de ${professional.name}`} style="border-radius:22px; aspect-ratio: 4 / 5; object-fit: cover;" />
+						))}
+					</div>
+				</div>
+			</div>
+
+			<aside class="page-stack">
+				<div class="panel page-stack">
+					<p class="eyebrow">Disponibilidade</p>
+					<h3>Próximas janelas</h3>
+					<div class="tag-row">
+						<span class="chip">Qua 14:30</span>
+						<span class="chip">Qui 10:30</span>
+						<span class="chip">Sex 16:00</span>
+						<span class="chip">Sáb 09:00</span>
+					</div>
+				</div>
+				<div class="panel page-stack">
+					<p class="eyebrow">Atendimento</p>
+					<h3>Preferências da agenda</h3>
+					<p>Combina atendimento em salão com deslocamento premium em domicílio dentro do raio configurado.</p>
+				</div>
+			</aside>
+		</section>
+
+		<div class="floating-bar" data-summary-bar>
+			<div>
+				<p>Total selecionado</p>
+				<strong data-total-price>{formatCurrency(totals.price)}</strong>
+				<p data-total-duration>{totals.durationMinutes} min estimados</p>
+			</div>
+			<a
+				class="button button--primary"
+				data-booking-link
+				href={`/Agendamento?professionalId=${professional.id}&services=${initialSelection.map((service) => service.id).join(',')}`}
+			>
+				Agendar
+			</a>
+		</div>
+	</div>
+
+	<script is:inline>
+		const formatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
+		const bookingRoot = document.querySelector('[data-booking-root]');
+		if (bookingRoot) {
+			const items = [...bookingRoot.querySelectorAll('[data-service-item]')];
+			const totalPrice = document.querySelector('[data-total-price]');
+			const totalDuration = document.querySelector('[data-total-duration]');
+			const bookingLink = document.querySelector('[data-booking-link]');
+			const updateSummary = () => {
+				const selected = items.filter((item) => item.querySelector('input')?.checked);
+				const price = selected.reduce((sum, item) => sum + Number(item.dataset.price || 0), 0);
+				const duration = selected.reduce((sum, item) => sum + Number(item.dataset.duration || 0), 0);
+				const serviceIds = selected.map((item) => item.dataset.serviceId).filter(Boolean);
+				if (totalPrice) totalPrice.textContent = formatter.format(price);
+				if (totalDuration) totalDuration.textContent = `${duration} min estimados`;
+				if (bookingLink) bookingLink.href = `/Agendamento?professionalId=${professional.id}&services=${serviceIds.join(',')}`;
+			};
+			items.forEach((item) => item.addEventListener('change', updateSummary));
+			updateSummary();
+		}
+	</script>
+</Layout>

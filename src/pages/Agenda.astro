@@ -1,0 +1,47 @@
+---
+import Layout from '../layouts/Layout.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import StatusBadge from '../components/StatusBadge.astro';
+import { bookings, formatCurrency, getBookingSummary } from '../data/pluribeauty';
+---
+
+<Layout title="Pluribeauty | Agenda" currentPage="Agenda">
+	<div class="page-stack">
+		<section class="panel page-stack">
+			<SectionHeading
+				eyebrow="Minha Agenda"
+				title="Próximos atendimentos e histórico, com status e contexto."
+				description="A agenda está pronta para receber filtros por período, notificações e rebooking automatizado."
+			/>
+		</section>
+		<section class="page-stack">
+			{
+				bookings.map((booking) => {
+					const summary = getBookingSummary(booking);
+					return (
+						<article class="booking-card">
+							<div class="inline-actions" style="justify-content: space-between; align-items: start;">
+								<div class="page-stack" style="gap: 6px;">
+									<p class="eyebrow">{summary.professional?.name}</p>
+									<h3>{booking.date} às {booking.time}</h3>
+									<p>{summary.selectedServices.map((service) => service.name).join(' + ')}</p>
+								</div>
+								<StatusBadge status={booking.status} />
+							</div>
+							<div class="booking-meta">
+								<span>{booking.locationType}</span>
+								<span>{summary.totalDuration} min</span>
+								<span>{formatCurrency(summary.totalPrice)}</span>
+							</div>
+							{booking.address && <p>{booking.address}</p>}
+							<div class="inline-actions">
+								<a class="button button--secondary" href={`/Chat/${booking.professionalId}`}>Abrir chat</a>
+								<a class="button button--ghost" href={`/ProfissionalDetalhe/${booking.professionalId}`}>Ver perfil</a>
+							</div>
+						</article>
+					);
+				})
+			}
+		</section>
+	</div>
+</Layout>

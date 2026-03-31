@@ -1,0 +1,27 @@
+---
+import Layout from '../layouts/Layout.astro';
+import ProfessionalCard from '../components/ProfessionalCard.astro';
+import SectionHeading from '../components/SectionHeading.astro';
+import { professionals } from '../data/pluribeauty';
+---
+
+<Layout title="Pluribeauty | Lista de Profissionais" currentPage="Descobrir">
+	<div class="page-stack">
+		<section class="panel page-stack">
+			<SectionHeading
+				eyebrow="Curadoria"
+				title="ListaProfissionais"
+				description="Grade principal com filtros de nota, faixa de preço e localização, pronta para virar busca real no Supabase."
+			/>
+			<div class="filter-row">
+				<span class="chip">4.7+ estrelas</span>
+				<span class="chip">Até R$ 200</span>
+				<span class="chip">Até 10 km</span>
+				<span class="chip">Somente domicílio</span>
+			</div>
+		</section>
+		<section class="cards-grid">
+			{professionals.map((professional) => <ProfessionalCard professional={professional} />)}
+		</section>
+	</div>
+</Layout>
