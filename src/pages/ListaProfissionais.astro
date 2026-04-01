@@ -2,7 +2,20 @@
 import Layout from '../layouts/Layout.astro';
 import ProfessionalCard from '../components/ProfessionalCard.astro';
 import SectionHeading from '../components/SectionHeading.astro';
-import { professionals } from '../data/pluribeauty';
+import { categories, professionals, type CategoryKey } from '../data/pluribeauty';
+
+const specialtyParam = Astro.url.searchParams.get('especialidade');
+const selectedCategory = categories.find((category) => category.id === specialtyParam);
+const filteredProfessionals = selectedCategory
+	? professionals.filter((professional) =>
+			professional.specialties.includes(selectedCategory.id as CategoryKey),
+		)
+	: professionals;
+
+const headingTitle = selectedCategory ? selectedCategory.name : 'Profissionais em destaque';
+const headingDescription = selectedCategory
+	? `Curadoria de profissionais para ${selectedCategory.name.toLowerCase()}. ${selectedCategory.description}.`
+	: 'Grade principal com filtros de nota, faixa de preço e localização, pronta para virar busca real no Supabase.';
 ---
 
 <Layout title="Pluribeauty | Lista de Profissionais" currentPage="Descobrir">
@@ -10,10 +23,11 @@ import { professionals } from '../data/pluribeauty';
 		<section class="panel page-stack">
 			<SectionHeading
 				eyebrow="Curadoria"
-				title="ListaProfissionais"
-				description="Grade principal com filtros de nota, faixa de preço e localização, pronta para virar busca real no Supabase."
+				title={headingTitle}
+				description={headingDescription}
 			/>
 			<div class="filter-row">
+				{selectedCategory && <span class="chip chip--active">{selectedCategory.name}</span>}
 				<span class="chip">4.7+ estrelas</span>
 				<span class="chip">Até R$ 200</span>
 				<span class="chip">Até 10 km</span>
@@ -21,7 +35,26 @@ import { professionals } from '../data/pluribeauty';
 			</div>
 		</section>
 		<section class="cards-grid">
-			{professionals.map((professional) => <ProfessionalCard professional={professional} />)}
+			{
+				filteredProfessionals.length ? (
+					filteredProfessionals.map((professional) => <ProfessionalCard professional={professional} />)
+				) : (
+					<div class="panel">
+						<p>
+							Ainda não há profissionais publicados para essa especialidade nesta demo. Escolha outra
+							categoria em <a href="/Descobrir">Descobrir</a>.
+						</p>
+					</div>
+				)
+			}
 		</section>
 	</div>
 </Layout>
+
+<style>
+	.chip--active {
+		background: rgba(160, 82, 45, 0.14);
+		border-color: rgba(160, 82, 45, 0.2);
+		color: var(--terracotta);
+	}
+</style>

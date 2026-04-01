@@ -1,0 +1,388 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import ProfessionalCard from '../../components/ProfessionalCard.astro';
+import { categories, professionals, type CategoryKey } from '../../data/pluribeauty';
+
+export function getStaticPaths() {
+	return categories.map((category) => ({
+		params: { id: category.id },
+		props: { category },
+	}));
+}
+
+const { category } = Astro.props;
+const filteredProfessionals = professionals.filter((professional) =>
+	professional.specialties.includes(category.id as CategoryKey),
+);
+const individualProfessionals = filteredProfessionals.filter((professional) => professional.profileType === 'individual');
+const salonProfessionals = filteredProfessionals.filter((professional) => professional.profileType === 'salao');
+---
+
+<Layout title={`Pluribeauty | ${category.name}`} currentPage="Descobrir">
+	<div class="page-stack specialty-page">
+		<section class="panel specialty-hero">
+			<h1 class="sr-only">{category.name}</h1>
+			<div class="specialty-toolbar">
+				<a class="specialty-toolbar__back" href="/Descobrir" aria-label="Voltar para Descobrir">
+					<span aria-hidden="true">←</span>
+				</a>
+				<span class="specialty-toolbar__brand">Pluri Beauty</span>
+				<div class="specialty-toolbar__title">{category.name}</div>
+
+				<div class="specialty-toolbar__actions">
+					<div class="specialty-filter" data-filter-root>
+						<button class="specialty-filter__trigger" type="button" data-filter-trigger aria-expanded="false">
+							Filtro
+						</button>
+
+						<div class="specialty-filter__popup" data-filter-popup hidden>
+							<p class="eyebrow">Filtros rápidos</p>
+							<div class="specialty-filter__options">
+								<span class="chip">4.7+ estrelas</span>
+								<span class="chip">Até R$ 200</span>
+								<span class="chip">Até 10 km</span>
+							</div>
+						</div>
+					</div>
+
+					<div class="specialty-toggle" data-specialty-toggle>
+						<button
+							class="specialty-toggle__option is-active"
+							type="button"
+							data-toggle-option
+							data-target-view="individual"
+							aria-pressed="true"
+						>
+							Profissionais
+						</button>
+						<button
+							class="specialty-toggle__option"
+							type="button"
+							data-toggle-option
+							data-target-view="salao"
+							aria-pressed="false"
+						>
+							Salões
+						</button>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<section class="cards-grid specialty-results" data-view-panel="individual">
+			{
+				individualProfessionals.length ? (
+					individualProfessionals.map((professional) => <ProfessionalCard professional={professional} />)
+				) : (
+					<div class="panel specialty-empty">
+						<p class="eyebrow">Profissionais individuais</p>
+						<h3>Ainda não há profissionais individuais publicados em {category.name}</h3>
+						<p>
+							Essa categoria já tem a estrutura pronta, mas ainda não recebeu perfis individuais nesta demo.
+							Enquanto isso, você pode navegar para a aba de salões ou explorar outras áreas em <a href="/Descobrir">Descobrir</a>.
+						</p>
+					</div>
+				)
+			}
+		</section>
+
+		<section class="cards-grid specialty-results" data-view-panel="salao" hidden>
+			{
+				salonProfessionals.length ? (
+					salonProfessionals.map((professional) => <ProfessionalCard professional={professional} />)
+				) : (
+					<div class="panel specialty-empty">
+						<p class="eyebrow">Salões de beleza</p>
+						<h3>Ainda não há salões publicados em {category.name}</h3>
+						<p>
+							Essa categoria já tem a estrutura pronta, mas ainda não recebeu salões nesta demo.
+							Enquanto isso, você pode navegar para a aba de profissionais ou explorar outras áreas em <a href="/Descobrir">Descobrir</a>.
+						</p>
+					</div>
+				)
+			}
+		</section>
+	</div>
+</Layout>
+
+<script is:inline>
+	const toggleRoot = document.querySelector('[data-specialty-toggle]');
+	const toggleButtons = Array.from(document.querySelectorAll('[data-toggle-option]'));
+	const viewPanels = Array.from(document.querySelectorAll('[data-view-panel]'));
+	const filterRoot = document.querySelector('[data-filter-root]');
+	const filterTrigger = document.querySelector('[data-filter-trigger]');
+	const filterPopup = document.querySelector('[data-filter-popup]');
+
+	const activateView = (view) => {
+		for (const button of toggleButtons) {
+			const isActive = button.dataset.targetView === view;
+			button.classList.toggle('is-active', isActive);
+			button.setAttribute('aria-pressed', String(isActive));
+		}
+
+		for (const panel of viewPanels) {
+			panel.hidden = panel.dataset.viewPanel !== view;
+		}
+	};
+
+	toggleRoot?.addEventListener('click', (event) => {
+		const button = event.target.closest('[data-toggle-option]');
+		if (!button) return;
+		activateView(button.dataset.targetView);
+	});
+
+	const closeFilterPopup = () => {
+		if (!filterPopup || !filterTrigger) return;
+		filterPopup.hidden = true;
+		filterTrigger.setAttribute('aria-expanded', 'false');
+	};
+
+	const openFilterPopup = () => {
+		if (!filterPopup || !filterTrigger) return;
+		filterPopup.hidden = false;
+		filterTrigger.setAttribute('aria-expanded', 'true');
+	};
+
+	filterTrigger?.addEventListener('click', () => {
+		if (filterPopup?.hidden) {
+			openFilterPopup();
+			return;
+		}
+
+		closeFilterPopup();
+	});
+
+	document.addEventListener('click', (event) => {
+		if (!filterRoot?.contains(event.target)) {
+			closeFilterPopup();
+		}
+	});
+
+	document.addEventListener('keydown', (event) => {
+		if (event.key === 'Escape') closeFilterPopup();
+	});
+</script>
+
+<style>
+	.specialty-page {
+		gap: 28px;
+	}
+
+	.specialty-hero {
+		padding: 12px 16px;
+	}
+
+	.specialty-toolbar {
+		display: grid;
+		grid-template-columns: auto auto minmax(0, 1fr) auto auto;
+		align-items: center;
+		gap: 10px;
+		min-width: 0;
+	}
+
+	.specialty-toolbar__brand {
+		min-width: 0;
+		font-size: 0.95rem;
+		font-weight: 600;
+		color: rgba(45, 41, 38, 0.72);
+		white-space: nowrap;
+	}
+
+	.specialty-toolbar__title {
+		flex: 1 1 auto;
+		min-width: 0;
+		font-family: 'Inter', system-ui, sans-serif;
+		font-size: 1.1rem;
+		line-height: 1.1;
+		font-weight: 700;
+		letter-spacing: -0.01em;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.specialty-toolbar__actions {
+		display: contents;
+	}
+
+	.specialty-toolbar__back {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 34px;
+		height: 34px;
+		border-radius: 999px;
+		border: 1px solid rgba(212, 196, 176, 0.9);
+		background: rgba(255, 255, 255, 0.82);
+		color: var(--soft-black);
+		font-size: 1rem;
+		font-weight: 700;
+	}
+
+	.chip--active {
+		background: rgba(160, 82, 45, 0.14);
+		border-color: rgba(160, 82, 45, 0.2);
+		color: var(--terracotta);
+	}
+
+	.specialty-empty {
+		display: grid;
+		gap: 12px;
+	}
+
+	.specialty-toggle {
+		display: inline-flex;
+		gap: 4px;
+		padding: 4px;
+		border-radius: 999px;
+		background: rgba(245, 240, 232, 0.88);
+		border: 1px solid rgba(212, 196, 176, 0.9);
+		white-space: nowrap;
+	}
+
+	.specialty-filter {
+		position: relative;
+	}
+
+	.specialty-filter__trigger {
+		display: inline-flex;
+		align-items: center;
+		min-height: 36px;
+		padding: 0 14px;
+		border-radius: 999px;
+		border: 1px solid rgba(212, 196, 176, 0.9);
+		background: rgba(255, 255, 255, 0.82);
+		color: var(--soft-black);
+		white-space: nowrap;
+		font-weight: 600;
+	}
+
+	.specialty-filter__popup {
+		position: absolute;
+		top: calc(100% + 10px);
+		right: 0;
+		z-index: 8;
+		width: min(280px, calc(100vw - 48px));
+		display: grid;
+		gap: 12px;
+		padding: 16px;
+		border-radius: 20px;
+		border: 1px solid rgba(212, 196, 176, 0.9);
+		background: rgba(255, 255, 255, 0.98);
+		box-shadow: 0 20px 40px rgba(45, 41, 38, 0.12);
+	}
+
+	.specialty-filter__options {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 10px;
+	}
+
+	.specialty-toggle__option {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-height: 36px;
+		padding: 0 12px;
+		border: 0;
+		border-radius: 999px;
+		background: transparent;
+		color: rgba(45, 41, 38, 0.78);
+		font-size: 0.94rem;
+		font-weight: 600;
+		white-space: nowrap;
+		transition:
+			background 180ms ease,
+			color 180ms ease,
+			box-shadow 180ms ease;
+	}
+
+	.specialty-toggle__option.is-active {
+		background: rgba(255, 255, 255, 0.96);
+		color: var(--soft-black);
+		box-shadow: 0 10px 18px rgba(45, 41, 38, 0.08);
+	}
+
+	.specialty-results {
+		grid-template-columns: 1fr;
+	}
+
+	.specialty-results[hidden] {
+		display: none;
+	}
+
+	@media (max-width: 720px) {
+		.specialty-hero {
+			padding: 10px 12px;
+		}
+
+		.specialty-toolbar {
+			grid-template-columns: auto auto minmax(0, 1fr) auto auto;
+			gap: 8px;
+		}
+
+		.specialty-toolbar__brand {
+			font-size: 0.84rem;
+		}
+
+		.specialty-toggle__option {
+			padding: 0 10px;
+			font-size: 0.82rem;
+		}
+
+		.specialty-toolbar__title {
+			font-size: 0.96rem;
+		}
+
+		.specialty-filter__trigger {
+			min-height: 34px;
+			padding: 0 12px;
+			font-size: 0.84rem;
+		}
+
+		.specialty-filter__popup {
+			left: 0;
+			right: auto;
+			width: min(100%, 320px);
+		}
+	}
+
+	@media (max-width: 520px) {
+		.specialty-toolbar__brand {
+			display: none;
+		}
+
+		.specialty-toolbar {
+			grid-template-columns: auto minmax(0, 1fr) auto auto;
+		}
+
+		.specialty-toggle__option {
+			padding: 0 9px;
+			font-size: 0.76rem;
+		}
+	}
+
+	.sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
+	}
+
+	@media (min-width: 720px) {
+		.specialty-results {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+	}
+
+	@media (min-width: 1080px) {
+		.specialty-results {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+	}
+</style>
