@@ -7,7 +7,8 @@ const baseUrl = `http://${previewHost}:${previewPort}`;
 const routes = [
 	['/', null],
 	['/Descobrir', 'Beleza &amp; Estilo'],
-	['/ListaProfissionais', 'ListaProfissionais'],
+	['/Especialidades/cabelo', 'Cabelo'],
+	['/ListaProfissionais', 'Profissionais em destaque'],
 	['/Agenda', 'Minha Agenda'],
 	['/Mapa', 'Visualização espacial'],
 	['/Favoritos', 'Coleção pessoal'],

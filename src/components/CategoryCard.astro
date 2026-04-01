@@ -1,11 +1,11 @@
 ---
-const { category } = Astro.props;
+const { category, href } = Astro.props;
 ---
 
-<article class="category-card" style={`--category-image: url('${category.image}');`}>
+<a class="category-card" href={href} style={`--category-image: url('${category.image}');`}>
 	<div class="category-card__content">
 		<p class="eyebrow">Especialidade</p>
 		<h3>{category.name}</h3>
 		<p>{category.description}</p>
 	</div>
-</article>
+</a>

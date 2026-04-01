@@ -43,17 +43,36 @@ import { categories } from '../data/pluribeauty';
 					<path d="m16 16 4.5 4.5"></path>
 				</svg>
 			</span>
-			<input type="search" placeholder="Buscar serviços, profissionais ou estilos" />
+			<input
+				type="search"
+				placeholder="Buscar serviços, profissionais ou estilos"
+				data-specialty-search
+			/>
 		</label>
 
 		<section class="discover-specialties">
 			<header class="discover-specialties__header">
 				<p class="eyebrow">Especialidades</p>
 				<h2>Escolha por categoria</h2>
+				<p class="discover-specialties__feedback" data-specialty-feedback>
+					Explore as categorias ou busque por contexto, como noiva, relaxar, barba alinhada ou limpeza de pele.
+				</p>
 			</header>
 
-			<div class="category-grid">
-				{categories.map((category) => <CategoryCard category={category} />)}
+			<div class="category-grid" data-category-grid>
+				{categories.map((category) => (
+					<div
+						data-specialty-card
+						data-specialty-name={category.name}
+						data-specialty-description={category.description}
+						data-specialty-keywords={category.keywords.join('|')}
+					>
+						<CategoryCard
+							category={category}
+							href={`/Especialidades/${encodeURIComponent(category.id)}`}
+						/>
+					</div>
+				))}
 			</div>
 		</section>
 	</section>
@@ -172,6 +191,9 @@ import { categories } from '../data/pluribeauty';
 	const modal = document.querySelector('[data-location-modal]');
 	const modalPanel = modal?.querySelector('.location-modal__panel');
 	const openModalButton = document.querySelector('[data-open-location-modal]');
+	const specialtySearchInput = document.querySelector('[data-specialty-search]');
+	const specialtyFeedback = document.querySelector('[data-specialty-feedback]');
+	const specialtyCards = Array.from(document.querySelectorAll('[data-specialty-card]'));
 	const summaryLabel = document.querySelector('[data-location-summary]');
 	const selectedLabel = document.querySelector('[data-location-selected]');
 	const statusLabel = document.querySelector('[data-location-status]');
@@ -201,6 +223,115 @@ import { categories } from '../data/pluribeauty';
 		iconSize: [18, 18],
 		iconAnchor: [9, 18],
 	});
+
+	const specialtyContextMap = {
+		noiva: ['maquiagem', 'cabelo', 'unhas'],
+		casamento: ['maquiagem', 'cabelo', 'unhas', 'sobrancelha', 'cilios'],
+		festa: ['maquiagem', 'cabelo', 'unhas'],
+		formatura: ['maquiagem', 'cabelo', 'unhas'],
+		relaxar: ['massagem', 'spa'],
+		relaxamento: ['massagem', 'spa'],
+		bemestar: ['spa', 'massagem', 'estetica'],
+		'bem-estar': ['spa', 'massagem', 'estetica'],
+		autocuidado: ['spa', 'estetica', 'massagem', 'skincare masculino'],
+		pele: ['estetica', 'skincare masculino'],
+		rosto: ['estetica', 'skincare masculino', 'maquiagem'],
+		barba: ['barba', 'design de barba', 'barbearia'],
+		barbearia: ['barbearia', 'barba', 'design de barba', 'corte masculino'],
+		degrade: ['corte masculino', 'barbearia'],
+		fade: ['corte masculino', 'barbearia'],
+		lash: ['cilios'],
+		sobrancelhas: ['sobrancelha'],
+		pe: ['podologia', 'unhas'],
+		pes: ['podologia', 'unhas'],
+		pelos: ['depilacao'],
+		depilar: ['depilacao'],
+		couro: ['tratamento capilar'],
+		fios: ['tratamento capilar', 'cabelo'],
+		cabelo: ['cabelo', 'tratamento capilar'],
+	};
+
+	const normalizeForMatch = (value) =>
+		normalizeText(value)
+			.replace(/[^a-z0-9\s-]/g, ' ')
+			.replace(/\s+/g, ' ')
+			.trim();
+
+	const getQueryTerms = (query) => {
+		const normalized = normalizeForMatch(query);
+		if (!normalized) return [];
+		const baseTerms = normalized.split(' ').filter(Boolean);
+		const expandedTerms = new Set(baseTerms);
+
+		for (const term of baseTerms) {
+			if (specialtyContextMap[term]) {
+				for (const alias of specialtyContextMap[term]) expandedTerms.add(normalizeForMatch(alias));
+			}
+		}
+
+		return Array.from(expandedTerms);
+	};
+
+	const scoreSpecialtyCard = (card, query) => {
+		const name = normalizeForMatch(card.dataset.specialtyName || '');
+		const description = normalizeForMatch(card.dataset.specialtyDescription || '');
+		const keywords = normalizeForMatch((card.dataset.specialtyKeywords || '').replace(/\|/g, ' '));
+		const haystack = [name, description, keywords].join(' ');
+		const normalizedQuery = normalizeForMatch(query);
+		const queryTerms = getQueryTerms(query);
+		let score = 0;
+
+		if (!normalizedQuery) return 0;
+		if (name.includes(normalizedQuery)) score += 220;
+		if (description.includes(normalizedQuery)) score += 120;
+		if (keywords.includes(normalizedQuery)) score += 170;
+
+		for (const term of queryTerms) {
+			if (!term) continue;
+			if (name.includes(term)) score += 90;
+			if (description.includes(term)) score += 50;
+			if (keywords.includes(term)) score += 75;
+		}
+
+		if (queryTerms.some((term) => haystack.includes(term))) score += 30;
+		return score;
+	};
+
+	const syncSpecialtyFilter = () => {
+		if (!specialtyCards.length || !specialtyFeedback) return;
+
+		const query = specialtySearchInput?.value?.trim() || '';
+		if (!query) {
+			for (const card of specialtyCards) {
+				card.hidden = false;
+				card.style.order = '0';
+			}
+			specialtyFeedback.textContent =
+				'Explore as categorias ou busque por contexto, como noiva, relaxar, barba alinhada ou limpeza de pele.';
+			return;
+		}
+
+		const ranked = specialtyCards
+			.map((card) => ({
+				card,
+				score: scoreSpecialtyCard(card, query),
+			}))
+			.sort((a, b) => b.score - a.score);
+
+		const visible = ranked.filter((item) => item.score > 0);
+		for (const [index, item] of ranked.entries()) {
+			item.card.hidden = item.score <= 0;
+			item.card.style.order = String(index);
+		}
+
+		if (!visible.length) {
+			specialtyFeedback.textContent =
+				'Nenhuma especialidade parece combinar com essa busca ainda. Tente termos como noiva, limpeza de pele, relaxamento ou degradê.';
+			return;
+		}
+
+		specialtyFeedback.textContent = `${visible.length} especialidade(s) relacionada(s) com "${query}".`;
+	};
 
 	const ensureMap = () => {
 		if (!mapElement || map) return;
@@ -418,9 +549,11 @@ import { categories } from '../data/pluribeauty';
 	draftLocation = JSON.parse(JSON.stringify(selectedLocation));
 	syncSummaryUi();
 	syncDraftUi();
+	syncSpecialtyFilter();
 
 	openModalButton?.addEventListener('click', openModal);
 	confirmButton?.addEventListener('click', confirmLocation);
+	specialtySearchInput?.addEventListener('input', syncSpecialtyFilter);
 
 	document.addEventListener('keydown', (event) => {
 		if (event.key === 'Escape' && modal && !modal.hidden) closeModal();
@@ -621,6 +754,13 @@ import { categories } from '../data/pluribeauty';
 	.discover-specialties__header {
 		display: grid;
 		gap: 8px;
+	}
+
+	.discover-specialties__feedback {
+		margin: 0;
+		max-width: 56ch;
+		font-size: 0.94rem;
+		color: rgba(45, 41, 38, 0.7);
 	}
 
 	.discover-specialties__header h2 {
