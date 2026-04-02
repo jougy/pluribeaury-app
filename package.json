@@ -10,11 +10,18 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "test:smoke": "node ./scripts/smoke-test.mjs"
+    "test": "npm run test:unit && npm run test:smoke",
+    "test:unit": "vitest run",
+    "test:tdd": "vitest",
+    "test:smoke": "tsx ./scripts/smoke-test.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.101.1",
     "astro": "^6.1.2",
     "leaflet": "^1.9.4"
+  },
+  "devDependencies": {
+    "tsx": "^4.20.6",
+    "vitest": "^4.1.2"
   }
 }
