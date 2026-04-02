@@ -1,0 +1,2 @@
+-- Seed local intencionalmente vazio.
+-- Mantido para que `supabase db reset` funcione em qualquer ambiente.

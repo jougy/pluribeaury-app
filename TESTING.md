@@ -2,12 +2,35 @@
 
 Este arquivo registra os testes mais valiosos para o projeto `Astro + Supabase + PWA` e serve como checklist antes de qualquer entrega.
 
-## 1. Testes Minimos Obrigatorios Antes de Entregar
+## 1. Estrategia de TDD
+
+Este projeto agora possui uma base de testes em camadas:
+
+1. `npm run test:unit`
+2. `npm run test:smoke`
+
+Durante implementacao, o fluxo recomendado e:
+
+1. escrever ou ajustar um teste primeiro
+2. implementar a mudanca minima para fazer o teste passar
+3. refatorar mantendo a suite verde
+
+Scripts disponiveis:
+
+```bash
+npm run test:unit   # roda contratos de dominio, dados, rotas e alinhamento com o banco
+npm run test:tdd    # modo watch para desenvolvimento orientado a testes
+npm run test:smoke  # build + preview + verificacao HTTP das rotas principais
+npm test            # unit + smoke
+```
+
+## 2. Testes Minimos Obrigatorios Antes de Entregar
 
 Sempre que houver mudanca relevante de codigo, executar pelo menos:
 
-1. `npm run build`
-2. `npm run test:smoke`
+1. `npm run test:unit`
+2. `npm run build`
+3. `npm run test:smoke`
 
 Esses dois passos ja pegam uma boa parte dos crashes comuns:
 
@@ -16,11 +39,13 @@ Esses dois passos ja pegam uma boa parte dos crashes comuns:
 - rota Astro invalida
 - pagina dinamica sem `getStaticPaths`
 - erro em build estatico
+- regressao em regras de negocio do agendamento
+- inconsistencias entre mocks, rotas e migration do Supabase
 - preview que nao sobe
 - paginas que retornam status diferente de `200`
 - HTML final sem o texto-base esperado do produto
 
-## 2. Testes de Build
+## 3. Testes de Build
 
 Objetivo: garantir que o app compila sem quebrar.
 
@@ -38,7 +63,7 @@ O que isso pega:
 - problemas de rotas dinamicas
 - problemas de tipagem/transpilacao
 
-## 3. Smoke Test HTTP
+## 4. Smoke Test HTTP
 
 Objetivo: garantir que o app gerado sobe e responde nas rotas principais.
 
@@ -58,19 +83,34 @@ Esse teste:
 
 Rotas verificadas hoje:
 
-- `/`
-- `/Descobrir`
-- `/ListaProfissionais`
-- `/Agenda`
-- `/Mapa`
-- `/Favoritos`
-- `/Perfil`
-- `/Agendamento`
-- `/CadastroProfissional`
-- `/ProfissionalDetalhe/studio-aura`
-- `/Chat/studio-aura`
+- rotas estaticas principais
+- todas as rotas dinamicas de categoria
+- todas as rotas dinamicas de profissional
+- todas as rotas dinamicas de chat
 
-## 4. Testes Visuais e de Responsividade
+Essas listas sao geradas dinamicamente a partir de `src/testing/route-contracts.ts`.
+
+## 5. Testes de Contrato
+
+Os testes unitarios agora cobrem:
+
+- regras de soma, horario passado e slots disponiveis em `src/lib/booking.ts`
+- integridade dos dados mockados em `src/data/pluribeauty.ts`
+- coerencia de `priceFrom` com os servicos reais de cada profissional
+- relacao entre bookings e servicos associados
+- manifest dinamico de rotas usado pela smoke suite
+- compatibilidade entre categorias/tipos usados no frontend e os enums da migration do Supabase
+
+Sempre que surgir:
+
+- nova regra de negocio
+- nova rota
+- novo helper reutilizavel
+- novo tipo ou enum em dados/migration
+
+deve nascer junto um contrato novo nessa camada.
+
+## 6. Testes Visuais e de Responsividade
 
 Objetivo: evitar regressao de layout.
 
@@ -91,7 +131,7 @@ Validar:
 - texto sem overflow
 - formularios confortaveis para toque
 
-## 5. Testes de Fluxo
+## 7. Testes de Fluxo
 
 Objetivo: validar as jornadas principais do produto.
 
@@ -103,7 +143,7 @@ Fluxos importantes:
 4. Mapa -> escolher profissional -> abrir perfil
 5. Favoritos -> abrir perfil -> agendar
 
-## 6. Testes de Dados e Regra de Negocio
+## 8. Testes de Dados e Regra de Negocio
 
 Validacoes recomendadas:
 
@@ -114,7 +154,7 @@ Validacoes recomendadas:
 - fallback quando `PUBLIC_SUPABASE_URL` ou `PUBLIC_SUPABASE_ANON_KEY` nao existem
 - comportamento com lista vazia de profissionais/servicos
 
-## 7. Testes de Supabase Local
+## 9. Testes de Supabase Local
 
 Objetivo: garantir ambiente local funcional.
 
@@ -135,7 +175,7 @@ Validar:
 - migration principal aplica sem erro
 - `.env` local esta sincronizado
 
-## 8. Testes de PWA
+## 10. Testes de PWA
 
 Checklist:
 
@@ -145,7 +185,7 @@ Checklist:
 - tema e nome do app corretos ao instalar
 - navegacao principal funciona offline ao menos para shell cacheado
 
-## 9. Testes de Regressao Mais Provaveis
+## 11. Testes de Regressao Mais Provaveis
 
 Toda mudanca deve considerar risco em:
 
@@ -155,12 +195,14 @@ Toda mudanca deve considerar risco em:
 - fluxo de agendamento por query string
 - `control.sh`
 - integracao de env com Supabase local
+- contratos entre frontend mockado e schema Supabase
 
-## 10. Regra de Entrega
+## 12. Regra de Entrega
 
 Antes de eu encerrar uma tarefa de implementacao neste projeto, devo tentar executar pelo menos:
 
 ```bash
+npm run test:unit
 npm run build
 npm run test:smoke
 ```

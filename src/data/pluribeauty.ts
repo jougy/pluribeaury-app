@@ -254,7 +254,7 @@ export const professionals: Professional[] = [
 		rating: 4.9,
 		totalReviews: 187,
 		distanceKm: 2.4,
-		priceFrom: 120,
+		priceFrom: 160,
 		isFeatured: true,
 		portfolio: [
 			'https://images.unsplash.com/photo-1562322140-8baeececf3df?auto=format&fit=crop&w=1000&q=80',
@@ -283,7 +283,7 @@ export const professionals: Professional[] = [
 		rating: 4.8,
 		totalReviews: 124,
 		distanceKm: 4.1,
-		priceFrom: 70,
+		priceFrom: 55,
 		isFeatured: true,
 		portfolio: [
 			'https://images.unsplash.com/photo-1512690459411-b0fd1c86b8c8?auto=format&fit=crop&w=1000&q=80',
@@ -341,7 +341,7 @@ export const professionals: Professional[] = [
 		rating: 4.7,
 		totalReviews: 71,
 		distanceKm: 6.2,
-		priceFrom: 180,
+		priceFrom: 280,
 		isFeatured: true,
 		portfolio: [
 			'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=1000&q=80',

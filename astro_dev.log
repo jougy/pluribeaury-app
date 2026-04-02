@@ -3,158 +3,36 @@
 > astro dev --host 0.0.0.0 --port 4321
 
 [vite] connected.
-13:13:18 [types] Generated 0ms
-13:13:18 [WARN] [content] Content config not loaded
-13:13:18 [vite] Re-optimizing dependencies because vite config has changed
- astro  v6.1.2 ready in 800 ms
+19:27:51 [types] Generated 1ms
+19:27:51 [WARN] [content] Content config not loaded
+19:27:51 [vite] Re-optimizing dependencies because vite config has changed
+ astro  v6.1.2 ready in 696 ms
 ┃ Local    http://localhost:4321/
-┃ Network  http://192.168.31.101:4321/
-           http://25.18.167.64:4321/
-           http://172.17.0.1:4321/
-           http://172.25.0.1:4321/
-13:13:18 watching for file changes...
-13:14:05 [200] /Descobrir 21ms
-13:14:05 [vite] ✨ new dependencies optimized: astro/runtime/client/dev-toolbar/entrypoint.js, leaflet
-13:14:05 [vite] ✨ optimized dependencies changed. reloading
-13:30:40 [200] /Descobrir 3ms
-13:31:09 [200] /Descobrir 3ms
-13:32:59 [200] /Descobrir 3ms
-13:33:50 [200] /Descobrir 3ms
-13:37:15 [watch] /src/layouts/Layout.astro?astro&type=style&index=0&lang.css
-13:38:12 [200] /Descobrir 15ms
-13:38:15 [200] /Descobrir 2ms
-13:56:30 [200] /Descobrir 5ms
-15:27:32 [ERROR] [CompilerError] The closing frontmatter fence (---) is missing an opening fence
-  Hint:
-    Add --- at the beginning of your file before any import statements or code
-  Stack trace:
-    at /home/jougy/Documents/programacao/pluribeauty/pluribeaury-app/src/components/CategoryCard.astro:2:1
-    [...] See full stack trace in the browser, or rerun with --verbose.
-15:27:33 [ERROR] [CompilerError] The closing frontmatter fence (---) is missing an opening fence
-  Hint:
-    Add --- at the beginning of your file before any import statements or code
-  Stack trace:
-    at /home/jougy/Documents/programacao/pluribeauty/pluribeaury-app/src/components/CategoryCard.astro:2:1
-    [...] See full stack trace in the browser, or rerun with --verbose.
-15:27:33 [ERROR] [CompilerError] The closing frontmatter fence (---) is missing an opening fence
-  Hint:
-    Add --- at the beginning of your file before any import statements or code
-  Stack trace:
-    at handleCompileResultErrors (/home/jougy/Documents/programacao/pluribeauty/pluribeaury-app/node_modules/astro/dist/core/compile/compile.js:45:7)
-    [...] See full stack trace in the browser, or rerun with --verbose.
-15:27:37 [watch] src/pages/Descobrir.astro
-15:27:37 [ERROR] [CompilerError] The closing frontmatter fence (---) is missing an opening fence
-  Hint:
-    Add --- at the beginning of your file before any import statements or code
-  Stack trace:
-    at /home/jougy/Documents/programacao/pluribeauty/pluribeaury-app/src/components/CategoryCard.astro:2:1
-    [...] See full stack trace in the browser, or rerun with --verbose.
-15:27:38 [ERROR] [CompilerError] The closing frontmatter fence (---) is missing an opening fence
-  Hint:
-    Add --- at the beginning of your file before any import statements or code
-  Stack trace:
-    at handleCompileResultErrors (/home/jougy/Documents/programacao/pluribeauty/pluribeaury-app/node_modules/astro/dist/core/compile/compile.js:45:7)
-    [...] See full stack trace in the browser, or rerun with --verbose.
-15:27:38 [ERROR] [CompilerError] The closing frontmatter fence (---) is missing an opening fence
-  Hint:
-    Add --- at the beginning of your file before any import statements or code
-  Stack trace:
-    at /home/jougy/Documents/programacao/pluribeauty/pluribeaury-app/src/components/CategoryCard.astro:2:1
-    [...] See full stack trace in the browser, or rerun with --verbose.
-15:27:53 [ERROR] [CompilerError] The closing frontmatter fence (---) is missing an opening fence
-  Hint:
-    Add --- at the beginning of your file before any import statements or code
-  Stack trace:
-    at handleCompileResultErrors (/home/jougy/Documents/programacao/pluribeauty/pluribeaury-app/node_modules/astro/dist/core/compile/compile.js:45:7)
-    [...] See full stack trace in the browser, or rerun with --verbose.
-15:27:54 [ERROR] [CompilerError] The closing frontmatter fence (---) is missing an opening fence
-  Hint:
-    Add --- at the beginning of your file before any import statements or code
-  Stack trace:
-    at /home/jougy/Documents/programacao/pluribeauty/pluribeaury-app/src/components/CategoryCard.astro:2:1
-    [...] See full stack trace in the browser, or rerun with --verbose.
-15:27:54 [ERROR] [CompilerError] The closing frontmatter fence (---) is missing an opening fence
-  Hint:
-    Add --- at the beginning of your file before any import statements or code
-  Stack trace:
-    at handleCompileResultErrors (/home/jougy/Documents/programacao/pluribeauty/pluribeaury-app/node_modules/astro/dist/core/compile/compile.js:45:7)
-    [...] See full stack trace in the browser, or rerun with --verbose.
-15:28:01 [ERROR] [CompilerError] The closing frontmatter fence (---) is missing an opening fence
-  Hint:
-    Add --- at the beginning of your file before any import statements or code
-  Stack trace:
-    at /home/jougy/Documents/programacao/pluribeauty/pluribeaury-app/src/components/CategoryCard.astro:2:1
-    [...] See full stack trace in the browser, or rerun with --verbose.
-15:28:02 [ERROR] [CompilerError] The closing frontmatter fence (---) is missing an opening fence
-  Hint:
-    Add --- at the beginning of your file before any import statements or code
-  Stack trace:
-    at handleCompileResultErrors (/home/jougy/Documents/programacao/pluribeauty/pluribeaury-app/node_modules/astro/dist/core/compile/compile.js:45:7)
-    [...] See full stack trace in the browser, or rerun with --verbose.
-15:28:02 [ERROR] [CompilerError] The closing frontmatter fence (---) is missing an opening fence
-  Hint:
-    Add --- at the beginning of your file before any import statements or code
-  Stack trace:
-    at /home/jougy/Documents/programacao/pluribeauty/pluribeaury-app/src/components/CategoryCard.astro:2:1
-    [...] See full stack trace in the browser, or rerun with --verbose.
-15:28:14 [200] /Descobrir 8ms
-15:28:15 [200] /Descobrir 3ms
-15:29:24 [200] /Descobrir 3ms
-15:29:30 [200] /Descobrir 2ms
-15:29:33 [200] /Descobrir 2ms
-15:30:44 [watch] /src/layouts/Layout.astro?astro&type=style&index=0&lang.css
-15:30:44 [watch] src/layouts/Layout.astro
-[vite] program reload
-15:31:34 [200] /ListaProfissionais 19ms
-15:31:39 [200] /ListaProfissionais 3ms
-15:31:43 [200] /ListaProfissionais 3ms
-15:31:48 [200] /ListaProfissionais 2ms
-15:31:56 [200] /ListaProfissionais 2ms
-16:36:59 [watch] src/pages/Descobrir.astro
-16:37:00 [200] /Descobrir 12ms
-16:37:00 [200] /Descobrir 4ms
-16:39:35 [200] /Especialidades/cabelo 10ms
-16:39:39 [200] /Especialidades/barba 3ms
-16:39:42 [200] /Especialidades/unhas 5ms
-16:39:44 [200] /Especialidades/maquiagem 3ms
-16:39:46 [200] /Especialidades/cabelo 3ms
-16:39:52 [200] /Especialidades/cabelo 2ms
-16:49:17 [200] /Especialidades/cabelo 13ms
-16:49:18 [200] /Descobrir 6ms
-16:49:51 [watch] /src/pages/Especialidades/[id].astro?astro&type=style&index=0&lang.css
-16:49:51 [200] /Especialidades/cabelo 9ms
-16:49:52 [200] /Descobrir 3ms
-16:50:49 [302] / 8ms
-16:50:49 [200] /Descobrir 3ms
-16:50:51 [200] /Especialidades/cabelo 3ms
-16:50:53 [200] /Especialidades/barba 2ms
-16:50:57 [200] /Especialidades/unhas 2ms
-16:50:58 [200] /Especialidades/barba 3ms
-16:51:18 [200] /Especialidades/cabelo 2ms
-16:51:22 [200] /ProfissionalDetalhe/studio-aura 10ms
-16:53:15 [200] /ListaProfissionais 7ms
-16:53:19 [200] /Descobrir 4ms
-16:53:22 [200] /Especialidades/cabelo 5ms
-16:56:04 [watch] /src/pages/Especialidades/[id].astro?astro&type=style&index=0&lang.css
-16:56:04 [200] /Especialidades/cabelo 9ms
-16:56:05 [200] /Descobrir 6ms
-17:10:24 [watch] /src/pages/Especialidades/[id].astro?astro&type=style&index=0&lang.css
-17:10:24 [200] /Especialidades/cabelo 8ms
-17:10:25 [200] /Descobrir 3ms
-17:11:08 [200] /Especialidades/cabelo 5ms
-17:16:22 [watch] /src/pages/Especialidades/[id].astro?astro&type=style&index=0&lang.css
-17:16:22 [200] /Especialidades/cabelo 10ms
-17:16:23 [200] /Descobrir 4ms
-17:21:06 [watch] /src/pages/Especialidades/[id].astro?astro&type=style&index=0&lang.css
-17:21:06 [200] /Especialidades/cabelo 10ms
-17:21:07 [200] /Descobrir 2ms
-17:21:25 [200] /Descobrir 5ms
-17:21:26 [200] /Especialidades/cabelo 3ms
-17:21:29 [200] /Descobrir 3ms
-17:21:30 [200] /Especialidades/barba 2ms
-17:21:32 [200] /Descobrir 3ms
-17:21:33 [200] /Especialidades/cabelo 5ms
-17:21:38 [200] /Descobrir 4ms
-17:21:39 [200] /Especialidades/unhas 3ms
-17:21:49 [200] /Descobrir 2ms
-17:21:51 [200] /Especialidades/cabelo 2ms
+┃ Network  http://192.168.31.44:4321/
+           http://192.168.64.1:4321/
+19:27:51 watching for file changes...
+19:27:51 Configuration file updated. Restarting...
+[vite] connected.
+19:27:52 [vite] Re-optimizing dependencies because vite config has changed
+19:27:52 [types] Generated 35ms
+19:27:52 [vite] Re-optimizing dependencies because vite config has changed
+19:28:04 [302] / 15ms
+19:28:04 [200] /Descobrir 14ms
+19:28:05 [vite] ✨ new dependencies optimized: astro/runtime/client/dev-toolbar/entrypoint.js, leaflet
+19:28:05 [vite] ✨ optimized dependencies changed. reloading
+19:28:13 [200] /Especialidades/cabelo 27ms
+19:28:16 [200] /Descobrir 7ms
+19:28:49 [200] /Especialidades/cabelo 21ms
+19:28:53 [200] /Descobrir 6ms
+19:39:54 Configuration file updated. Restarting...
+[vite] connected.
+19:39:56 [vite] Re-optimizing dependencies because vite config has changed
+19:39:57 [types] Generated 105ms
+19:39:57 [vite] Re-optimizing dependencies because vite config has changed
+19:39:57 [200] /Descobrir 18ms
+19:39:58 [vite] ✨ new dependencies optimized: astro/runtime/client/dev-toolbar/entrypoint.js, leaflet
+19:39:58 [vite] ✨ optimized dependencies changed. reloading
+19:39:58 [200] /Descobrir 2ms
+19:41:17 [200] /Descobrir 12ms
+20:32:24 [200] /Descobrir 33ms
+04:24:01 [200] /Descobrir 41ms

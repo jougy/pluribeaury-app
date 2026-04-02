@@ -1,26 +1,13 @@
 import { spawn } from 'node:child_process';
+import { getRouteContracts } from '../src/testing/route-contracts';
 
 const previewPort = Number(process.env.SMOKE_TEST_PORT || 4325);
 const previewHost = process.env.SMOKE_TEST_HOST || '127.0.0.1';
 const baseUrl = `http://${previewHost}:${previewPort}`;
+const routes = getRouteContracts();
 
-const routes = [
-	['/', null],
-	['/Descobrir', 'Beleza &amp; Estilo'],
-	['/Especialidades/cabelo', 'Cabelo'],
-	['/ListaProfissionais', 'Profissionais em destaque'],
-	['/Agenda', 'Minha Agenda'],
-	['/Mapa', 'Visualização espacial'],
-	['/Favoritos', 'Coleção pessoal'],
-	['/Perfil', 'Conta, preferências'],
-	['/Agendamento', 'Fluxo em 3 etapas'],
-	['/CadastroProfissional', 'Wizard de verificação'],
-	['/ProfissionalDetalhe/studio-aura', 'Studio Aura'],
-	['/Chat/studio-aura', 'Chat'],
-];
-
-function runCommand(command, args) {
-	return new Promise((resolve, reject) => {
+function runCommand(command: string, args: string[]) {
+	return new Promise<void>((resolve, reject) => {
 		const child = spawn(command, args, {
 			stdio: 'inherit',
 			env: process.env,
@@ -37,7 +24,7 @@ function runCommand(command, args) {
 	});
 }
 
-async function waitForServer(url, timeoutMs = 15000) {
+async function waitForServer(url: string, timeoutMs = 15000) {
 	const start = Date.now();
 
 	while (Date.now() - start < timeoutMs) {
@@ -54,12 +41,12 @@ async function waitForServer(url, timeoutMs = 15000) {
 	throw new Error(`Preview server did not become ready at ${url} within ${timeoutMs}ms`);
 }
 
-async function assertRoute(pathname, expectedText) {
+async function assertRoute(pathname: string, expectedText?: string, acceptRedirect = false) {
 	const response = await fetch(`${baseUrl}${pathname}`, {
-		redirect: pathname === '/' ? 'manual' : 'follow',
+		redirect: acceptRedirect ? 'manual' : 'follow',
 	});
 
-	if (pathname === '/') {
+	if (acceptRedirect) {
 		if (![200, 301, 302, 307, 308].includes(response.status)) {
 			throw new Error(`Route ${pathname} returned unexpected status ${response.status}`);
 		}
@@ -81,7 +68,7 @@ async function assertRoute(pathname, expectedText) {
 	}
 }
 
-let previewProcess;
+let previewProcess: ReturnType<typeof spawn> | undefined;
 
 try {
 	console.log('\n[smoke] Building project...');
@@ -95,10 +82,10 @@ try {
 
 	await waitForServer(`${baseUrl}/Descobrir`);
 
-	console.log('\n[smoke] Checking main routes...');
-	for (const [pathname, expectedText] of routes) {
-		await assertRoute(pathname, expectedText);
-		console.log(`[smoke] OK ${pathname}`);
+	console.log(`\n[smoke] Checking ${routes.length} route contracts...`);
+	for (const route of routes) {
+		await assertRoute(route.pathname, route.expectedText, route.acceptRedirect);
+		console.log(`[smoke] OK ${route.pathname}`);
 	}
 
 	console.log('\n[smoke] Smoke test passed.');
